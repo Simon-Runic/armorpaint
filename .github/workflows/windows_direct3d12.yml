@@ -1,21 +1,35 @@
-name: Windows (Direct3D12)
+name: Windows download
 
 on:
-  push:
-    branches:
-    - main
-  pull_request:
-    branches:
-    - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Compile
-      run: |
-        cd paint
-        ../base/make --compile
+      - name: Download source
+        uses: actions/checkout@v4
+
+      - name: Build ArmorPaint
+        working-directory: paint
+        shell: cmd
+        run: ..\base\make.bat --compile
+
+      - name: Check executable
+        shell: pwsh
+        run: |
+          if (!(Test-Path "paint/build/out/ArmorPaint.exe")) {
+            throw "ArmorPaint.exe was not found in the output folder."
+          }
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArmorPaint-Windows
+          path: paint/build/out/
+          if-no-files-found: error
+          retention-days: 7
